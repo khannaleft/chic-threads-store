@@ -33,7 +33,7 @@ const handler: Handler = async (event: HandlerEvent) => {
     }
 
     const whereClause = conditions.length > 0
-      ? sql`WHERE ${conditions.reduce((acc, curr) => sql`${acc} AND ${curr}`)}`
+      ? sql`WHERE ${conditions.reduce((prev, curr) => sql`${prev} AND ${curr}`)}`
       : sql``;
       
     const orderByClause = sql`ORDER BY ${sortOptions[typedSortBy]}`;
