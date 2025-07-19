@@ -1,0 +1,31 @@
+{
+  "name": "chic-threads-ai-store",
+  "version": "1.0.0",
+  "private": true,
+  "type": "module",
+  "description": "Full-stack online store with AI Style Advisor",
+  "scripts": {
+    "dev": "netlify dev",
+    "build": "vite build",
+    "preview": "vite preview",
+    "seed-db": "node --loader ts-node/esm db-seed/seed.ts"
+  },
+  "dependencies": {
+    "@google/genai": "^1.10.0",
+    "postgres": "^3.4.4",
+    "react": "^18.2.0",
+    "react-dom": "^18.2.0"
+  },
+  "devDependencies": {
+    "@netlify/functions": "^2.6.0",
+    "@types/node": "^20.12.12",
+    "@types/react": "^18.2.0",
+    "@types/react-dom": "^18.2.0",
+    "@vitejs/plugin-react": "^4.3.1",
+    "dotenv": "^16.4.5",
+    "netlify-cli": "^17.23.0",
+    "ts-node": "^10.9.2",
+    "typescript": "^5.4.5",
+    "vite": "^5.3.1"
+  }
+}
