@@ -1,5 +1,5 @@
 import { stream, type HandlerEvent } from "@netlify/functions";
-import { GoogleGenAI, Chat } from "@google/genai";
+import { GoogleGenAI, Chat, GenerateContentResponse } from "@google/genai";
 
 const { API_KEY } = process.env;
 
@@ -37,6 +37,23 @@ function getChat(sessionId: string): Chat {
   return newChat;
 }
 
+async function* createResponseGenerator(resultStream: AsyncGenerator<GenerateContentResponse>) {
+    const encoder = new TextEncoder();
+    try {
+        for await (const chunk of resultStream) {
+            const chunkText = chunk.text;
+            if (chunkText) {
+                const data = `data: ${JSON.stringify({ text: chunkText })}\n\n`;
+                yield encoder.encode(data);
+            }
+        }
+    } catch(e) {
+        console.error("Stream error:", e);
+        const errorData = `data: ${JSON.stringify({ error: "Stream failed" })}\n\n`;
+        yield encoder.encode(errorData);
+    }
+}
+
 
 const handler = stream(async (event: HandlerEvent) => {
     if (event.httpMethod !== 'POST') {
@@ -53,27 +70,6 @@ const handler = stream(async (event: HandlerEvent) => {
         const chat = getChat(sessionId);
         const result = await chat.sendMessageStream({ message });
         
-        const responseStream = new ReadableStream({
-            async start(controller) {
-                const encoder = new TextEncoder();
-                try {
-                    for await (const chunk of result) {
-                        const chunkText = chunk.text;
-                        if (chunkText) {
-                            const data = `data: ${JSON.stringify({ text: chunkText })}\n\n`;
-                            controller.enqueue(encoder.encode(data));
-                        }
-                    }
-                } catch(e) {
-                    console.error("Stream error:", e);
-                    const errorData = `data: ${JSON.stringify({ error: "Stream failed" })}\n\n`;
-                    controller.enqueue(encoder.encode(errorData));
-                } finally {
-                    controller.close();
-                }
-            }
-        });
-
         return {
             statusCode: 200,
             headers: {
@@ -81,7 +77,7 @@ const handler = stream(async (event: HandlerEvent) => {
                 'Cache-Control': 'no-cache',
                 'Connection': 'keep-alive',
             },
-            body: responseStream,
+            body: createResponseGenerator(result),
         };
 
     } catch (error) {
